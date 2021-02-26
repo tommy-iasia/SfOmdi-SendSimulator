@@ -6,7 +6,7 @@ import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.DatagramChannel;
-import java.util.Date;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,6 +26,9 @@ public class Channel {
     public void add(Message message) {
         messages.add(message);
     }
+    public void addAll(Collection<? extends Message> messages) {
+        this.messages.addAll(messages);
+    }
 
     public int nextSequence = 1;
     private ByteBuffer nextPacket() {
@@ -38,7 +41,7 @@ public class Channel {
         packetBuffer.put((byte) contentBuffers.size());
         packetBuffer.put((byte) 77);
         packetBuffer.putInt(nextSequence);
-        packetBuffer.putLong(new Date().getTime());
+        packetBuffer.putLong(System.currentTimeMillis());
 
         for (var contentBuffer : contentBuffers) {
             packetBuffer.putShort((short) (2 + contentBuffer.limit()));

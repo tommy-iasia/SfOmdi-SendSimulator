@@ -5,6 +5,4 @@ import java.io.IOException;
 public interface Hub {
 
     boolean run() throws IOException;
-
-    long sent();
 }

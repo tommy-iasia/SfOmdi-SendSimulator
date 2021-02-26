@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -26,6 +27,11 @@ public class ChannelGroup {
     public void add(Message message) {
         for (var channel : channels) {
             channel.add(message);
+        }
+    }
+    public void addAll(Collection<? extends Message> messages) {
+        for (var channel : channels) {
+            channel.addAll(messages);
         }
     }
 

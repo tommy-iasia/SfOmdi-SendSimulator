@@ -5,9 +5,9 @@ import com.iasia.net.Message;
 
 import java.io.IOException;
 
-public abstract class SingleHub  implements Hub {
+public abstract class SingleHub implements Hub {
 
-    public SingleHub(ChannelGroup channelGroup) throws IOException {
+    public SingleHub(ChannelGroup channelGroup) {
         this.channelGroup = channelGroup;
     }
     private final ChannelGroup channelGroup;
@@ -26,9 +26,4 @@ public abstract class SingleHub  implements Hub {
         return true;
     }
     protected abstract Message next();
-
-    @Override
-    public long sent() {
-        return channelGroup.sent();
-    }
 }
