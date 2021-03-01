@@ -70,11 +70,14 @@ public class Channel {
     private final DatagramChannel channel;
     public void send() throws IOException {
         var packet = nextPacket();
-        sent += channel.write(packet);
-    }
 
-    private long sent = 0;
-    public long sent() {
-        return sent;
+        sendLength += channel.write(packet);
+
+        sendCount++;
+    }
+    private long sendLength = 0;
+    private long sendCount = 0;
+    public SendCount sent() {
+        return new SendCount(sendLength, sendCount);
     }
 }

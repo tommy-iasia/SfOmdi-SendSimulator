@@ -11,40 +11,49 @@ import java.util.stream.Collectors;
 
 public class TradeHub implements Hub {
 
-    public TradeHub(ChannelGroup channelGroup, TradeStartPoint... startPoints) {
+    public TradeHub(ChannelGroup channelGroup, TradeStart... tradeStarts) {
         this.channelGroup = channelGroup;
 
-        lastTrades = new LinkedList<>(Arrays.stream(startPoints).map(t ->
-                new TradeAddMessage(t.code, t.id, t.priceRaised, 0, 0))
-                .collect(Collectors.toList()));
+        lastAdds = Arrays.stream(tradeStarts).map(t ->
+                new AddTradeMessage(t.code, t.id, t.priceRaised, 0, 0))
+                .collect(Collectors.toCollection(LinkedList::new));
     }
     private final ChannelGroup channelGroup;
 
     private final Random random = new Random(1);
-    private final LinkedList<TradeAddMessage> lastTrades;
+    private final LinkedList<AddTradeMessage> lastAdds;
+    private final LinkedList<CancelTradeMessage> cancels = new LinkedList<>();
     @Override
     public boolean run() throws IOException {
         for (var i = 0; i < 10; i++) {
-            for (var j = 0; j < 10; j++) {
-                var lastTrade = lastTrades.poll();
+            var lastTrade = lastAdds.poll();
+            assert lastTrade != null;
 
-                var changeRaised = random.nextInt(3) * 10;
-                var quantity = random.nextInt(10) * 100;
+            var changeRaised = random.nextInt(3) * 10;
+            var quantity = random.nextInt(10) * 100;
 
-                var nextTrade = new TradeAddMessage(lastTrade.code,
-                        lastTrade.id + 1,
-                        lastTrade.priceRaised + changeRaised,
-                        quantity,
-                        System.currentTimeMillis());
+            var nextTrade = new AddTradeMessage(
+                    lastTrade.code,
+                    lastTrade.id + 1,
+                    lastTrade.priceRaised + changeRaised,
+                    quantity,
+                    System.currentTimeMillis());
 
-                lastTrades.add(nextTrade);
+            lastAdds.add(nextTrade);
+            channelGroup.add(nextTrade);
 
-                channelGroup.add(nextTrade);
+            if (random.nextInt(10) == 1) {
+                var cancel = new CancelTradeMessage(nextTrade.code, nextTrade.id);
+                cancels.add(cancel);
             }
-
-            channelGroup.send();
         }
 
+        if (cancels.size() >= 10 || random.nextBoolean()) {
+            channelGroup.addAll(cancels);
+            cancels.clear();
+        }
+
+        channelGroup.send();
         return true;
     }
 }

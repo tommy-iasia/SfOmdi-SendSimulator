@@ -40,8 +40,9 @@ public class ChannelGroup {
             channel.send();
         }
     }
-    public long sent() {
-        return channels.stream().mapToLong(t -> t.sent()).sum();
+    public SendCount sent() {
+        var counts = channels.stream().map(t -> t.sent()).collect(Collectors.toList());
+        return SendCount.sum(counts);
     }
 
     public static ChannelGroup get(int channelId) throws IOException {

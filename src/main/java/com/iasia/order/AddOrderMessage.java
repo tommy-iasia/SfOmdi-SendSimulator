@@ -1,32 +1,29 @@
-package com.iasia.trade;
+package com.iasia.order;
 
 import com.iasia.net.Message;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class TradeAddMessage extends Message {
+public class AddOrderMessage extends Message {
 
-    public TradeAddMessage(int code, int id, int priceRaised, int quantity, long time) {
+    public AddOrderMessage(int code, long id, int priceRaised, int quantity, OrderSide side) {
         super((short) 50);
 
         this.code = code;
         this.id = id;
         this.priceRaised = priceRaised;
         this.quantity = quantity;
-        this.time = time;
+        this.side = side;
     }
 
     public final int code;
-    public final int id;
+    public final long id;
 
     public final int priceRaised;
-    public final static int PRICE_RAISE = 1_000;
-
     public final int quantity;
 
-
-    public final long time;
+    public final OrderSide side;
 
     @Override
     public ByteBuffer getContent() {
@@ -34,15 +31,18 @@ public class TradeAddMessage extends Message {
         buffer.putShort(type);
 
         buffer.putInt(code);
-        buffer.putInt(id);
+        buffer.putLong(id);
 
         buffer.putInt(priceRaised);
         buffer.putInt(quantity);
 
-        buffer.putShort((short) 0);
+        buffer.putShort((short) (side == OrderSide.Bid ? 0 : 1));
+        buffer.put((byte) '1');
 
-        buffer.putLong(time);
+        buffer.put((byte) '7');
+        buffer.putInt(0);
 
         return buffer.flip();
     }
 }
+
