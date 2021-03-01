@@ -29,7 +29,7 @@ public class AddTradeMessage extends Message {
 
     @Override
     public ByteBuffer getContent() {
-        var buffer = ByteBuffer.allocate(38).order(ByteOrder.LITTLE_ENDIAN);
+        var buffer = ByteBuffer.allocate(30).order(ByteOrder.LITTLE_ENDIAN);
         buffer.putShort(type);
 
         buffer.putInt(code);
@@ -39,6 +39,9 @@ public class AddTradeMessage extends Message {
         buffer.putInt(quantity);
 
         buffer.putShort((short) 0);
+
+        buffer.put((byte) '7');
+        buffer.put((byte) '7');
 
         buffer.putLong(time);
 

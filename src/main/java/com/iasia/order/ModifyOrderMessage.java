@@ -8,7 +8,7 @@ import java.nio.ByteOrder;
 public class ModifyOrderMessage extends Message {
 
     public ModifyOrderMessage(int code, long id, int quantity, OrderSide side) {
-        super((short) 50);
+        super((short) 31);
 
         this.code = code;
         this.id = id;
@@ -33,7 +33,7 @@ public class ModifyOrderMessage extends Message {
 
         buffer.putInt(quantity);
 
-        buffer.putShort((short) (side == OrderSide.Bid ? 0 : 1));
+        buffer.putShort((short) (side == OrderSide.BID ? 0 : 1));
 
         buffer.put((byte) '7');
         buffer.put((byte) '7');

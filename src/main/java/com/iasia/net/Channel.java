@@ -1,5 +1,7 @@
 package com.iasia.net;
 
+import com.iasia.collection.Pair;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.StandardSocketOptions;
@@ -22,7 +24,7 @@ public class Channel {
         channel.connect(address);
     }
 
-    private final List<Message> messages = new LinkedList<>();
+    private final LinkedList<Message> messages = new LinkedList<>();
     public void add(Message message) {
         messages.add(message);
     }
@@ -32,48 +34,67 @@ public class Channel {
 
     public int nextSequence = 1;
     private ByteBuffer nextPacket() {
-        var contentBuffers = messages.stream().map(Message::getContent).collect(Collectors.toList());
+        var messageContents = nextContents();
 
-        var packetSize = 16 + contentBuffers.stream().mapToInt(t -> 2 + t.limit()).sum();
+        var packetSize = 16 + messageContents.stream().mapToInt(t -> 2 + t.b.limit()).sum();
         var packetBuffer = ByteBuffer.allocate(packetSize).order(ByteOrder.LITTLE_ENDIAN);
 
         packetBuffer.putShort((short) packetSize);
-        packetBuffer.put((byte) contentBuffers.size());
+        packetBuffer.put((byte) messageContents.size());
         packetBuffer.put((byte) 77);
         packetBuffer.putInt(nextSequence);
         packetBuffer.putLong(System.currentTimeMillis());
 
-        for (var contentBuffer : contentBuffers) {
-            packetBuffer.putShort((short) (2 + contentBuffer.limit()));
-            packetBuffer.put(contentBuffer);
+        for (var messageContent : messageContents) {
+            packetBuffer.putShort((short) (2 + messageContent.b.limit()));
+            packetBuffer.put(messageContent.b);
         }
 
-        var resetMessages = messages.stream()
-                .filter(t -> t instanceof ResetSequenceMessage)
-                .map(t -> (ResetSequenceMessage)t)
+        var resetMessages = messageContents.stream()
+                .filter(t -> t.a instanceof ResetSequenceMessage)
+                .map(t -> (ResetSequenceMessage)t.a)
                 .collect(Collectors.toList());
 
         if (resetMessages.isEmpty()) {
-            nextSequence += contentBuffers.size();
+            nextSequence += messageContents.size();
         } else {
             var index = resetMessages.size() - 1;
             var resetMessage = resetMessages.get(index);
             nextSequence = resetMessage.sequence;
         }
 
-        messages.clear();
-
         packetBuffer.flip();
         return packetBuffer;
+    }
+    private List<Pair<Message, ByteBuffer>> nextContents() {
+        var pairs = new LinkedList<Pair<Message, ByteBuffer>>();
+        var length = 0;
+
+        Message message;
+        while ((message = messages.poll()) != null) {
+            var content = message.getContent();
+
+            var pair = new Pair<>(message, content);
+            pairs.add(pair);
+
+            length += 2 + content.limit();
+            if (length >= 1000) {
+                break;
+            }
+        }
+
+        return pairs;
     }
 
     private final DatagramChannel channel;
     public void send() throws IOException {
-        var packet = nextPacket();
+        while (!messages.isEmpty()) {
+            var packet = nextPacket();
 
-        sendLength += channel.write(packet);
+            sendLength += channel.write(packet);
 
-        sendCount++;
+            sendCount++;
+        }
     }
     private long sendLength = 0;
     private long sendCount = 0;

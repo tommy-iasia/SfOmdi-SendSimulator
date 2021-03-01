@@ -8,7 +8,7 @@ import java.nio.ByteOrder;
 public class DeleteOrderMessage extends Message {
 
     public DeleteOrderMessage(int code, long id, OrderSide side) {
-        super((short) 50);
+        super((short) 32);
 
         this.code = code;
         this.id = id;
@@ -28,7 +28,7 @@ public class DeleteOrderMessage extends Message {
         buffer.putInt(code);
         buffer.putLong(id);
 
-        buffer.putShort((short) (side == OrderSide.Bid ? 0 : 1));
+        buffer.putShort((short) (side == OrderSide.BID ? 0 : 1));
 
         buffer.put((byte) '7');
         buffer.put((byte) '7');

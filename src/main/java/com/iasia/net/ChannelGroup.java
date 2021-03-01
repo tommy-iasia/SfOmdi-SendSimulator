@@ -29,11 +29,6 @@ public class ChannelGroup {
             channel.add(message);
         }
     }
-    public void addAll(Collection<? extends Message> messages) {
-        for (var channel : channels) {
-            channel.addAll(messages);
-        }
-    }
 
     public void send() throws IOException {
         for (var channel : channels) {

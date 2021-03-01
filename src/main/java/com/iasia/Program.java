@@ -4,11 +4,11 @@ import com.iasia.hub.Hub;
 import com.iasia.market.MarketDefinitionHub;
 import com.iasia.net.ChannelGroup;
 import com.iasia.net.SendCount;
+import com.iasia.order.OrderHub;
 import com.iasia.security.SecurityDefinitionHub;
 import com.iasia.time.Stopwatch;
 import com.iasia.trade.AddTradeMessage;
 import com.iasia.trade.TradeHub;
-import com.iasia.trade.TradeStart;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -22,7 +22,7 @@ public class Program {
         System.out.println("start");
 
         sendDefinitions();
-        sendDynamicData(2 * 1000);
+        sendDynamicData(1 * 1000);
 
         var allSent = SendCount.sum(totalSends);
         System.out.println("sent "
@@ -45,28 +45,37 @@ public class Program {
                 new ChannelGroup[] { channel },
                 Long.MAX_VALUE);
     }
+
     private static void sendDynamicData(long timeout) throws IOException {
         var channel1 = ChannelGroup.get(30);
-        var tradeHub1 = new TradeHub(channel1,
-                new TradeStart(1, 1_000_000, 50 * AddTradeMessage.PRICE_RAISE),
-                new TradeStart(2, 2_000_000, 70 * AddTradeMessage.PRICE_RAISE));
+
+        var tradeHub1 = new TradeHub(1, 50 * AddTradeMessage.PRICE_RAISE, channel1);
+        var orderHub1 = new OrderHub(tradeHub1, channel1);
+
+        var tradeHub2 = new TradeHub(2, 70 * AddTradeMessage.PRICE_RAISE, channel1);
+        var orderHub2 = new OrderHub(tradeHub2, channel1);
 
         var channel2 = ChannelGroup.get(31);
-        var tradeHub2 = new TradeHub(channel2,
-                new TradeStart(3, 3_000_000, 10 * AddTradeMessage.PRICE_RAISE),
-                new TradeStart(4, 4_000_000, 20 * AddTradeMessage.PRICE_RAISE),
-                new TradeStart(5, 5_000_000, 50 * AddTradeMessage.PRICE_RAISE));
 
-        var channel3 = ChannelGroup.get(32);
-        var tradeHub3 = new TradeHub(channel3,
-                new TradeStart(5, 5_000_000, 50 * AddTradeMessage.PRICE_RAISE));
+        var tradeHub3 = new TradeHub(3, 10 * AddTradeMessage.PRICE_RAISE, channel2);
+        var orderHub3 = new OrderHub(tradeHub3, channel2);
 
-        run(new Hub[] { tradeHub1, tradeHub2, tradeHub3 },
-                new ChannelGroup[] { channel1, channel2, channel3 },
+        var tradeHub4 = new TradeHub(4, 20 * AddTradeMessage.PRICE_RAISE, channel2);
+        var orderHub4 = new OrderHub(tradeHub4, channel2);
+
+        var tradeHub5 = new TradeHub(5, 50 * AddTradeMessage.PRICE_RAISE, channel2);
+        var orderHub5 = new OrderHub(tradeHub5, channel2);
+
+        run(
+                new Hub[] {
+                        orderHub1, orderHub2, orderHub3, orderHub4, orderHub5,
+                        tradeHub1, tradeHub2, tradeHub3, tradeHub4, tradeHub5,
+                },
+                new ChannelGroup[] { channel1, channel2 },
                 timeout);
     }
 
-    private static final long bandwidth = 5 * 1024 * 1024 / 8;
+    private static final long bandwidth = 60 * 1024 * 1024 / 8;
     private static final List<SendCount> totalSends = new LinkedList<>();
     private static void run(Hub[] hubs, ChannelGroup[] channelGroups, long timeout) {
         System.out.println("run starts");
